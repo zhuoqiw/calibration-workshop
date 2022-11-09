@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="20.11.3.0">
+<procedure name="dump_calib_handle">
+<interface>
+<ic>
+<par name="CalibHandle" base_type="ctrl" dimension="0"/>
+<par name="FileName" base_type="ctrl" dimension="0"/>
+<par name="SignificantDigits" base_type="ctrl" dimension="0"/>
+</ic>
+</interface>
+<body>
+<l>sdata := ''</l>
+<l>fmt := '+.' + SignificantDigits $ 'd' + 'e'</l>
+<c></c>
+<l>get_calib_data (CalibHandle, 'model', 'general', 'num_cameras', NumCameras)</l>
+<l>for CameraIdx := 0 to NumCameras - 1 by 1</l>
+<l>    sdata := sdata + '-\n'</l>
+<c></c>
+<l>    sdata := sdata + '  camera:\n'</l>
+<l>    get_calib_data (CalibHandle, 'camera', CameraIdx, 'params', Params)</l>
+<l>    get_calib_data (CalibHandle, 'camera', CameraIdx, 'params_labels', ParamsLabels)</l>
+<l>    for i := 0 to |Params| - 1 by 1</l>
+<l>        tuple_type (Params[i], Type)</l>
+<l>        switch (Type)</l>
+<l>        case H_TYPE_STRING:</l>
+<l>            String := Params[i]</l>
+<l>            break</l>
+<l>        case H_TYPE_INT:</l>
+<l>            tuple_string (Params[i], 'd', String)</l>
+<l>            break</l>
+<l>        case H_TYPE_REAL:</l>
+<l>            tuple_string (Params[i], fmt, String)</l>
+<l>            break</l>
+<l>        default:</l>
+<l>            break</l>
+<l>        endswitch</l>
+<l>        sdata := sdata + '    ' + ParamsLabels[i] + ': ' + String + '\n'</l>
+<l>    endfor</l>
+<l>    sdata := sdata + '  calib_obj:\n'</l>
+<c></c>
+<l>    get_calib_data (CalibHandle, 'calib_obj', 0, 'x', X)</l>
+<l>    get_calib_data (CalibHandle, 'calib_obj', 0, 'y', Y)</l>
+<l>    get_calib_data (CalibHandle, 'calib_obj', 0, 'z', Z)</l>
+<l>    query_calib_data_observ_indices (CalibHandle, 'camera', CameraIdx, CalibObjIdxs, CalibObjPoseIdxs)</l>
+<c></c>
+<l>    seg_observ := '    observ_points:\n'</l>
+<l>    seg_object := '    object_points:\n'</l>
+<l>    seg_reproj := '    reproject_points:\n'</l>
+<l>    seg_rvecs := '    rvecs:\n'</l>
+<l>    seg_tvecs := '    tvecs:\n'</l>
+<c></c>
+<l>    for i := 0 to |CalibObjPoseIdxs| - 1 by 1</l>
+<l>        seg_observ := seg_observ + '      -\n'</l>
+<l>        seg_object := seg_object + '      -\n'</l>
+<l>        seg_reproj := seg_reproj + '      -\n'</l>
+<l>        CalibObjIdx := CalibObjIdxs[i]</l>
+<l>        CalibObjPoseIdx := CalibObjPoseIdxs[i]</l>
+<l>        get_calib_data_observ_points (CalibHandle, CameraIdx, CalibObjIdx, CalibObjPoseIdx, R, C, Index, Pose)</l>
+<l>        for ii := 0 to |R| - 1 by 1</l>
+<l>            tuple_string (R[ii], fmt, r)</l>
+<l>            tuple_string (C[ii], fmt, c)</l>
+<l>            tuple_string (X[Index[ii]], fmt, x)</l>
+<l>            tuple_string (Y[Index[ii]], fmt, y)</l>
+<l>            tuple_string (Z[Index[ii]], fmt, z)</l>
+<l>            seg_observ := seg_observ + '        - [' + c + ', ' + r + ']\n'</l>
+<l>            seg_object := seg_object + '        - [' + x + ', ' + y + ', ' + z + ']\n'</l>
+<l>        endfor</l>
+<l>        get_calib_data (CalibHandle, 'calib_obj_pose', [CalibObjIdx, CalibObjPoseIdx], 'pose', Pose)</l>
+<l>        pose_to_hom_mat3d(Pose, HomMat3D)</l>
+<l>        convert_pose_type (Pose, 'Rp+T', 'rodriguez', 'point', Pose)</l>
+<c>        </c>
+<l>        rx := Pose[3]</l>
+<l>        ry := Pose[4]</l>
+<l>        rz := Pose[5]</l>
+<l>        l := sqrt(rx * rx + ry * ry + rz * rz)</l>
+<l>        d := 2 * atan(l)</l>
+<l>        Pose[3] := rx * d / l</l>
+<l>        Pose[4] := ry * d / l</l>
+<l>        Pose[5] := rz * d / l</l>
+<l>        tuple_string (Pose, fmt, H)</l>
+<l>        seg_tvecs := seg_tvecs + '      - [' + H[0] + ', ' + H[1] + ', ' + H[2] + ']\n'</l>
+<l>        seg_rvecs := seg_rvecs + '      - [' + H[3] + ', ' + H[4] + ', ' + H[5] + ']\n'</l>
+<c>        </c>
+<l>        affine_trans_point_3d (HomMat3D, X, Y, Z, xx, yy, zz)</l>
+<l>        project_3d_point (xx, yy, zz, Params, Row, Col)</l>
+<l>        for ii := 0 to |R| - 1 by 1</l>
+<l>            tuple_string (Row[Index[ii]], fmt, r)</l>
+<l>            tuple_string (Col[Index[ii]], fmt, c)</l>
+<l>            seg_reproj := seg_reproj + '        - [' + c + ', ' + r + ']\n'</l>
+<l>        endfor</l>
+<l>    endfor</l>
+<l>    sdata := sdata + seg_observ + seg_reproj + seg_object + seg_rvecs + seg_tvecs</l>
+<l>endfor</l>
+<c></c>
+<l>open_file (FileName, 'output', FileHandle)</l>
+<l>fwrite_string (FileHandle, sdata)</l>
+<l>close_file (FileHandle)</l>
+<l>return ()</l>
+<c></c>
+</body>
+<docu id="dump_calib_handle">
+<abstract lang="zh_CN">The general structure of yaml:
+-
+  camera:
+    camera_type:
+    focus:
+    k1:
+    k2:
+    k3:
+    p1:
+    p2:
+    sx:
+    sy:
+    cx:
+    cy:
+    image_width:
+    image_height:
+  calib_obj:
+    observ_points: [[[[c1, r1]], [[c2, r2]],...],...]
+    object_points: [[[[x1, y1, z1]], [[x2, y2, z2]],...],...]
+    poses: [[tx1, ty1, tz1, a1, b1, g1], [tx2, ty2, tz2, a2, b2, g2],...]
+
+The observ_points is a 4 axes array, the shape is: (NumberOfPoses, NumberOfMarks, 1, 2).
+The object_points is a 4 axes array, the shape is: (NumberOfPoses, NumberOfMarks, 1, 3).
+The poses is a 2 axes array, the shape is: (NumberOfPoses, 6).</abstract>
+<example lang="zh_CN">calibrate_cameras(CalibHandle, Error)
+dump_calib_handle(CalibHandle, 'output.yml', 10)</example>
+<keywords lang="zh_CN">
+<item>yaml</item>
+<item>calibration</item>
+</keywords>
+<predecessor>
+<item>calibrate_cameras</item>
+</predecessor>
+<short lang="zh_CN">Dump calib handle to yaml file.</short>
+<parameters>
+<parameter id="CalibHandle">
+<mixed_type>false</mixed_type>
+<multivalue>false</multivalue>
+<sem_type>calib_data</sem_type>
+<type_list>
+<item>integer</item>
+</type_list>
+</parameter>
+<parameter id="FileName">
+<default_type>string</default_type>
+<file_ext>
+<item>yml</item>
+</file_ext>
+<mixed_type>false</mixed_type>
+<sem_type>filename.write</sem_type>
+<type_list>
+<item>string</item>
+</type_list>
+</parameter>
+<parameter id="SignificantDigits">
+<default_type>integer</default_type>
+<default_value>10</default_value>
+<sem_type>number</sem_type>
+<type_list>
+<item>integer</item>
+</type_list>
+</parameter>
+</parameters>
+</docu>
+</procedure>
+</hdevelop>
