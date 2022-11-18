@@ -1,4 +1,16 @@
+# https://pypi.org/project/opencv-python/
 opencv-python==4.6.0.66
+
+# https://pypi.org/project/matplotlib/
 matplotlib==3.6.2
+
+# Matplotlib Jupyter Extension
+# ipympl enables using the interactive features of matplotlib in Jupyter Notebooks, Jupyter Lab, Google Colab, VSCode notebooks, Google Colab.
+# https://matplotlib.org/ipympl/
 ipympl==0.9.2
+
+# A Python / ThreeJS bridge for Jupyter Widgets.
+# https://pypi.org/project/pythreejs/
 pythreejs==2.4.1
+
+PyYAML==6.0
