@@ -1,6 +1,6 @@
 from collections import namedtuple
 import numpy as np
-from .conic import Conic
+from . import conic
 
 class Ellipse(namedtuple("EllipseBase", "x, y, a, b, r")):
     """A namedtuple to represent an ellipse."""
@@ -15,7 +15,7 @@ class Ellipse(namedtuple("EllipseBase", "x, y, a, b, r")):
         D = -2 * A * x - B * y
         E = -2 * C * y - B * x
         F = A * x ** 2 + B * x * y + C * y ** 2 - a ** 2 * b ** 2
-        return Conic(A, B, C, D, E, F)
+        return conic.Conic(A, B, C, D, E, F)
 
     # def fromConic(self):
     #     A, B, C, D, E, F = self.quadratic()
