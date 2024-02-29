@@ -1,61 +1,60 @@
+from collections import namedtuple
 import numpy as np
 
-class Conic:
-    def __init__(self, A, B, C, D, E, F) -> None:
-            self.fromQuadric(A, B, C, D, E, F)
-
-    def fromQuadric(self, A, B, C, D, E, F):
-        self.m = np.array([[A, B / 2, D / 2], [B / 2, C, E / 2], [D / 2, E / 2, F]])
-
-    def toQuadric(self):
-        m = self.m
-        return (m[0, 0], m[0, 1] * 2, m[1, 1], m[0, 2] * 2, m[1, 2] * 2, m[2, 2])
-
-    def Q(self, x, y):
-        A, B, C, D, E, F = self.getQuadric()
-        return A * x ** 2 + B * x * y + C * y ** 2 + D * x + E * y + F
-    
-    def getQuadric(self):
-        m = self.m
-        # A = m[0, 0]
-        # B = m[0, 1] * 2
-        # C = m[1, 1]
-        # D = m[0, 2] * 2
-        # E = m[1, 2] * 2
-        # F = m[2, 2]
-        return (m[0, 0], m[0, 1] * 2, m[1, 1], m[0, 2] * 2, m[1, 2] * 2, m[2, 2])
-
-    def discriminant(self):
-        A = self.m[0, 0]
-        B = self.m[0, 1] * 2
-        C = self.m[1, 1]
+class Conic(namedtuple("ConicBase", "A, B, C, D, E, F")):
+    """A namedtuple to represent a conic section."""
+    @property
+    def d(self):
+        A, B, C, *t = self
         return B ** 2 - 4 * A * C
 
-    def perspectiveTransform(self, H):
-        Hinv = np.linalg.inv(H)
-        self.m = Hinv.T @ self.m @ Hinv
+    @property
+    def m(self):
+        A, B, C, D, E, F = self
+        return np.array([[A, B / 2, D / 2], [B / 2, C, E / 2], [D / 2, E / 2, F]])
 
-    def isEllipse(self):
-        if self.discriminant() < 0:
+    def __call__(self, x, y):
+        A, B, C, D, E, F = self
+        return A * x ** 2 + B * x * y + C * y ** 2 + D * x + E * y + F
+
+    def __rmatmul__(self, H):
+        _H = np.linalg.inv(H)
+        _M = _H.T @ self.m @ _H
+        assert(np.array_equal(_M, _M.T))
+        return Conic(_M[0, 0], _M[0, 1] * 2, _M[1, 1], _M[0, 2] * 2, _M[1, 2] * 2, _M[2, 2])
+
+    def is_ellipse(self):
+        if self.d() < 0:
             return True
         else:
             return False
 
-    def isCircle(self):
-        A, B, C, *t = self.getQuadric()
+    def is_circle(self):
+        if not self.is_ellipse():
+            return False
+        A, B, C, *t = self
         if B == 0 and A == C != 0:
             return True
         else:
             return False
 
-    def isParabola(self):
-        if self.discriminant() == 0:
+    def is_parabola(self):
+        if self.d() == 0:
             return True
         else:
             return False
 
-    def isHyperbola(self):
-        if self.discriminant() > 0:
+    def is_hyperbola(self):
+        if self.d() > 0:
+            return True
+        else:
+            return False
+        
+    def is_rectangular(self):
+        if not self.is_hyperbola():
+            return False
+        A, B, C, *t = self
+        if A + C == 0:
             return True
         else:
             return False
