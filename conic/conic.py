@@ -23,7 +23,6 @@ class Conic(namedtuple("ConicBase", "A, B, C, D, E, F")):
         if not self.is_ellipse():
             return None
         A, B, C, D, E, F = self
-        assert C * np.linalg.det(self.m) < 0, "degenerate case"
         d = self.dis
         a = -np.sqrt(2 * (A * E ** 2 + C * D ** 2 - B * D * E + d * F) * (A + C + np.sqrt((A - C) ** 2 + B ** 2))) / d
         b = -np.sqrt(2 * (A * E ** 2 + C * D ** 2 - B * D * E + d * F) * (A + C - np.sqrt((A - C) ** 2 + B ** 2))) / d
@@ -43,7 +42,7 @@ class Conic(namedtuple("ConicBase", "A, B, C, D, E, F")):
         return Conic(_M[0, 0], _M[0, 1] * 2, _M[1, 1], _M[0, 2] * 2, _M[1, 2] * 2, _M[2, 2])
 
     def is_degenerate(self):
-        return True if self.det == 0 else False
+        return True if self.det == 0 or self.det * self.C > 0 else False
     
     def is_ellipse(self):
         return True if self.dis < 0 else False
