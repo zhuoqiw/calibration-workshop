@@ -7,33 +7,24 @@ class Ellipse(namedtuple("EllipseBase", "x, y, a, b, r")):
     @property
     def conic(self):
         x, y, a, b, r = self
-        sin = np.sin(r)
-        cos = np.cos(r)
-        A = a ** 2 * sin ** 2 + b ** 2 * cos ** 2
-        B = 2 * (b ** 2 - a ** 2) * sin * cos
-        C = a ** 2 * cos ** 2 + b ** 2 * sin ** 2
-        D = -2 * A * x - B * y
-        E = -2 * C * y - B * x
-        F = A * x ** 2 + B * x * y + C * y ** 2 - a ** 2 * b ** 2
-        return conic.Conic(A, B, C, D, E, F)
-
-    # def fromConic(self):
-    #     A, B, C, D, E, F = self.quadratic()
-    #     dis = self.discriminant()
-    #     a = -np.sqrt(2 * (A * E ** 2 + C * D ** 2 - B * D * E + dis * F) * (A + C + np.sqrt((A - C) ** 2 + B ** 2))) / dis
-    #     b = -np.sqrt(2 * (A * E ** 2 + C * D ** 2 - B * D * E + dis * F) * (A + C - np.sqrt((A - C) ** 2 + B ** 2))) / dis
-    #     x = (2 * C * D - B * E) / dis
-    #     y = (2 * A * E - B * D) / dis
-    #     if B == 0:
-    #         if A <= C:
-    #             radian = 0
-    #         else:
-    #             radian = np.pi / 2
-    #     else:
-    #         radian = np.arctan((C - A - np.sqrt((A - C) ** 2 + B ** 2)) / B)
-    #     self._center = (x, y)
-    #     self._axes = (a, b)
-    #     self._radian = radian
+        if a == b == 0:
+            A = 1
+            B = 0
+            C = 1
+            D = -2 * x
+            E = -2 * y
+            F = x ** 2 + y ** 2
+            return conic.Conic(A, B, C, D, E, F)
+        else:
+            sin = np.sin(r)
+            cos = np.cos(r)
+            A = a ** 2 * sin ** 2 + b ** 2 * cos ** 2
+            B = 2 * (b ** 2 - a ** 2) * sin * cos
+            C = a ** 2 * cos ** 2 + b ** 2 * sin ** 2
+            D = -2 * A * x - B * y
+            E = -2 * C * y - B * x
+            F = A * x ** 2 + B * x * y + C * y ** 2 - a ** 2 * b ** 2
+            return conic.Conic(A, B, C, D, E, F)
 
     # def limits(self):
     #     sin = np.sin(self._radian)

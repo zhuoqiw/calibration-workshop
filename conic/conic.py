@@ -45,7 +45,7 @@ class Conic(namedtuple("ConicBase", "A, B, C, D, E, F")):
         return True if self.det == 0 or self.det * self.C > 0 else False
     
     def is_ellipse(self):
-        return True if self.dis < 0 else False
+        return True if self.dis < 0 and self.C * self.det <= 0 else False
 
     def is_circle(self):
         if not self.is_ellipse():
